@@ -1,11 +1,12 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
 import time
+from dotenv import load_dotenv
 
 # Import your RAG pipeline
-from rag_pipeline import rag_pipeline, embedder
+# Comment this out for the initial test if you want to debug connection only
+from rag_pipeline import rag_pipeline
 
 # Load environment variables
 load_dotenv()
@@ -30,18 +31,30 @@ def chat():
         aircraft_model = data.get('aircraftModel')
         issue_category = data.get('issueCategory')
         
-        print(f"Received message: '{user_message}'")
+        # Print received data to console for verification
+        print("="*50)
+        print(f"RECEIVED MESSAGE FROM FRONTEND: '{user_message}'")
         print(f"Aircraft model: {aircraft_model}")
         print(f"Issue category: {issue_category}")
+        print("="*50)
         
         # Add tags to the message if available
+        enhanced_message = user_message
         if aircraft_model:
-            user_message = f"[Aircraft: {aircraft_model}] {user_message}"
+            enhanced_message = f"[Aircraft: {aircraft_model}] {enhanced_message}"
         if issue_category:
-            user_message = f"[Issue Category: {issue_category}] {user_message}"
+            enhanced_message = f"[Issue Category: {issue_category}] {enhanced_message}"
         
-        # Generate response using RAG pipeline
-        response = rag_pipeline(user_message)
+        print(f"Enhanced message to be processed: '{enhanced_message}'")
+        
+        # Process with RAG pipeline
+        try:
+            # Generate response using RAG pipeline
+            response = rag_pipeline(enhanced_message)
+            print(f"RAG pipeline response received: {response[:100]}...")  # Print first 100 chars
+        except Exception as rag_error:
+            print(f"Error in RAG pipeline: {rag_error}")
+            response = f"I encountered an error processing your request: {str(rag_error)}"
         
         # Calculate processing time
         processing_time = round(time.time() - start_time, 2)
@@ -63,10 +76,12 @@ def health_check():
     """
     return jsonify({
         'status': 'ok',
-        'message': 'Flask API is running'
+        'message': 'Flask API is running with RAG pipeline integration'
     })
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
-    print(f"Starting Flask server on port {port}...")
+    print(f"Starting Flask server with RAG pipeline on port {port}...")
+    print(f"Server will receive messages from frontend running at http://localhost:5173")
+    print(f"Health check available at: http://localhost:{port}/api/health")
     app.run(host='0.0.0.0', port=port, debug=True)

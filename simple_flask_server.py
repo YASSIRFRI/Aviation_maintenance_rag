@@ -1,22 +1,15 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
 import time
 
-# Import your RAG pipeline
-from rag_pipeline import rag_pipeline, embedder
-
-# Load environment variables
-load_dotenv()
-
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)  # Enable CORS for all routes - critical for connecting to React
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """
-    Endpoint for chat messages that uses the RAG pipeline
+    Simple endpoint for chat messages that just logs received messages
     """
     try:
         start_time = time.time()
@@ -30,25 +23,23 @@ def chat():
         aircraft_model = data.get('aircraftModel')
         issue_category = data.get('issueCategory')
         
-        print(f"Received message: '{user_message}'")
+        # Print received data to console for verification
+        print("="*50)
+        print(f"RECEIVED MESSAGE FROM FRONTEND: '{user_message}'")
         print(f"Aircraft model: {aircraft_model}")
         print(f"Issue category: {issue_category}")
+        print("="*50)
         
-        # Add tags to the message if available
-        if aircraft_model:
-            user_message = f"[Aircraft: {aircraft_model}] {user_message}"
-        if issue_category:
-            user_message = f"[Issue Category: {issue_category}] {user_message}"
-        
-        # Generate response using RAG pipeline
-        response = rag_pipeline(user_message)
+        # For testing, just return a simple response
+        # Later you'll replace this with your actual RAG pipeline
+        mock_response = f"I received your message about: {user_message}"
         
         # Calculate processing time
         processing_time = round(time.time() - start_time, 2)
         print(f"Processing time: {processing_time}s")
         
         return jsonify({
-            'response': response,
+            'response': mock_response,
             'processingTime': processing_time
         })
     
@@ -69,4 +60,6 @@ def health_check():
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     print(f"Starting Flask server on port {port}...")
+    print(f"Server will receive messages from frontend running at http://localhost:5173")
+    print(f"Health check available at: http://localhost:{port}/api/health")
     app.run(host='0.0.0.0', port=port, debug=True)

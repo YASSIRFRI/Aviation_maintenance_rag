@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import { MessageSquareText } from 'lucide-react';
 import Card from '../components/ui/Card';
 import MessageBubble from '../components/Chat/MessageBubble';
 import ChatInput from '../components/Chat/ChatInput';
 import { Message, AircraftModel, IssueCategory } from '../types';
-import axios from 'axios';
 
-// API configuration
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Set the API URL - this should match your Flask server address
+const API_URL = 'http://localhost:5000/api';
 
 const GetAssistance: React.FC = () => {
+  // Start with an empty messages array instead of mock data
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,12 +41,16 @@ const GetAssistance: React.FC = () => {
     setIsLoading(true);
     
     try {
+      console.log('Sending request to Flask API:', content);
+      
       // Send request to Flask API
       const response = await axios.post(`${API_URL}/chat`, {
         message: content,
         aircraftModel: tags.aircraftModel,
         issueCategory: tags.issueCategory
       });
+      
+      console.log('Received response from Flask API:', response.data);
       
       // Add assistant message to chat
       const newAssistantMessage: Message = {
@@ -81,6 +86,7 @@ const GetAssistance: React.FC = () => {
       <div>
         <h1 className="text-2xl font-bold">Maintenance Assistance</h1>
         <p className="text-gray-500 dark:text-gray-400">Get expert guidance for aircraft maintenance issues</p>
+        {error && <p className="text-red-500 mt-2">{error}</p>}
       </div>
       
       <Card className="h-[calc(100vh-220px)] flex flex-col">
