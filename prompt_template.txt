@@ -1,29 +1,9 @@
 You are an aircraft maintenance assistant. Use the following context to answer the question as accurately and concisely as possible.
+
 Context:
-(19 of 50) Time / Day Date : Place Altitude.AGL.Single Value : 0 Aircraft Reference : X Aircraft Operator : Air Carrier Make Model Name : B787 Dreamliner Undifferentiated or Other Model Operating Under FAR Part : Part 121 Mission : Passenger Flight Phase : Parked Component Aircraft Component : Oxygen System/Portable Aircraft Reference : X Problem : Design Person Location Of Person : Hangar / Base Reporter Organization : Air Carrier Function.Maintenance : Technician Qualification.Maintenance : Powerplant Qualification.Maintenance : Airframe ASRS Report Number.Accession Number : Events Anomaly.Aircraft Equipment Problem : Critical Detector.Person : Maintenance When Detected : Routine Inspection Result.General : Maintenance Action Assessments Contributing Factors / Situations : Aircraft Contributing Factors / Situations : Procedure Primary Problem : Aircraft Narrative: 1 Oxygen bottle was low, needed to be serviced. When servicing bottle found the batteries in the bottle corroded, possible causing a spark in the bottle. Note the airplane number was just generated (aircraft that the bottle came off is unknown) for this form to be completed. Have the B787 bottle checked more frequently (there is a longer time frame on the B787 bottles -due to the bottle), hydrostatic test and due date are longer times than the standard bottles on the other fleets. This B787 only gets checked w hen it needs servicing. Note I have seen (2) other times during servicing of this style of bottle -that had corroded batteries. They were both found because the test that gives you a green light was not coming on. Synopsis Maintenance Technician reported finding corroded batteries in a B787 portable oxygen bottle.
-
-Synopsis:
-Maintenance Technician reported finding corroded batteries in a B787 portable oxygen
-bottle.
-
-
-(10 of 50) Time / Day Date : Place Altitude.AGL.Single Value : 0 Aircraft Reference : X Aircraft Operator : Air Carrier Make Model Name : A319 Operating Under FAR Part : Part 121 Flight Phase : Parked Maintenance Status.Maintenance Items Involved : Inspection Component Aircraft Component : Wing Access Panel Aircraft Reference : X Problem : Malfunctioning Person Location Of Person : Hangar / Base Reporter Organization : Air Carrier Function.Maintenance : Technician ASRS Report Number.Accession Number : Events Anomaly.Aircraft Equipment Problem : Critical Detector.Person : Maintenance When Detected : Routine Inspection Result.General : Maintenance Action Result.Aircraft : Aircraft Damaged Assessments Contributing Factors / Situations : Aircraft Contributing Factors / Situations : Incorrect / Not Installed / Unavailable Part Contributing Factors / Situations : Procedure Primary Problem : Aircraft Narrative: 1 Fuel tank entry mechanics found heavy corrosion on the attaching hardware and impact fuel panels 640cb and 640bb. Synopsis A319 Mechanic reported heavy corrosion was found on components of the fuel tank.
-
-Synopsis:
-A319 Mechanic reported heavy corrosion was found on components of the fuel tank.
-
-Problem:
-test flight needed for unusual vibration
-
-Action:
-removed cleaned reinstalled 2 4 fuel inj nozzles o
-
-Problem:
-maintenance flight required to check for abnormal engine roughness in flight level
-
-Action:
-completed cylinder 4 baffle instllation
+{context}
 
 Question:
-During a high-altitude cruise at FL350, the #2 engine’s N1 spool dropped by 8% within 30 seconds, accompanied by a low-oil-pressure EICAS advisory and faint metallic vibration. Technician suspects either a bleed-air leak in the HP system or a faulty pressure sensor—what step-by-step troubleshooting should be applied?
+{question}
+
 Answer:

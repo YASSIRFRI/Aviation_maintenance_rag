@@ -4,11 +4,15 @@ import Card from '../components/ui/Card';
 import MessageBubble from '../components/Chat/MessageBubble';
 import ChatInput from '../components/Chat/ChatInput';
 import { Message, AircraftModel, IssueCategory } from '../types';
-import { mockChatSessions } from '../data/mockData';
+import axios from 'axios';
+
+// API configuration
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const GetAssistance: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>(mockChatSessions[0].messages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -19,7 +23,11 @@ const GetAssistance: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  const handleSendMessage = (content: string, tags: { aircraftModel?: AircraftModel; issueCategory?: IssueCategory }) => {
+  const handleSendMessage = async (content: string, tags: { aircraftModel?: AircraftModel; issueCategory?: IssueCategory }) => {
+    // Reset any previous errors
+    setError(null);
+    
+    // Add user message to chat
     const newUserMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -31,44 +39,41 @@ const GetAssistance: React.FC = () => {
     setMessages(prev => [...prev, newUserMessage]);
     setIsLoading(true);
     
-    // Simulate API response delay
-    setTimeout(() => {
-      // In a real app, this would call the API with RAG system to get a response
-      const mockResponse = simulateModelResponse(content, tags);
+    try {
+      // Send request to Flask API
+      const response = await axios.post(`${API_URL}/chat`, {
+        message: content,
+        aircraftModel: tags.aircraftModel,
+        issueCategory: tags.issueCategory
+      });
       
+      // Add assistant message to chat
       const newAssistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: mockResponse,
+        content: response.data.response,
         timestamp: new Date(),
+        processingTime: response.data.processingTime,
       };
       
       setMessages(prev => [...prev, newAssistantMessage]);
+    } catch (err) {
+      console.error('Error fetching response:', err);
+      setError('Failed to get response from the server. Please try again.');
+      
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: 'I apologize, but I encountered an error while processing your request. Please try again or contact support if the issue persists.',
+        timestamp: new Date(),
+        isError: true,
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 2000);
-  };
-  
-  const simulateModelResponse = (content: string, tags: { aircraftModel?: AircraftModel; issueCategory?: IssueCategory }) => {
-    // This function simulates the response from the model based on the user's message and tags
-    // In a real app, this would involve:
-    // 1. Vector search in QuadrantCloud for relevant maintenance docs
-    // 2. Passing those docs as context to the LLM (Llama 8b)
-    // 3. Getting a response from the LLM
-    
-    // For demo purposes, return a canned response based on input
-    if (content.toLowerCase().includes('engine') || content.toLowerCase().includes('vibration')) {
-      return 'Based on the described symptoms, this could be related to an engine imbalance or loose mounting. I recommend checking:\n\n1. Engine mount torque values - refer to AMM section 71-00-00\n2. Fan blade integrity - look for any signs of damage or FOD\n3. Accessory gearbox attachments\n\nThe maintenance manual for this specific aircraft model provides a detailed troubleshooting procedure in section 71-00-05. Would you like me to walk you through those steps?';
     }
-    
-    if (content.toLowerCase().includes('hydraulic') || content.toLowerCase().includes('leak')) {
-      return 'Hydraulic leaks can be challenging to locate precisely. Based on your description, I recommend:\n\n1. Perform a visual inspection of all hydraulic lines in the suspected area\n2. Check for blue/green staining which indicates previous leakage\n3. Clean the area and pressurize the system to observe for active leaks\n4. Use UV dye testing if the leak is difficult to locate\n\nFor this aircraft type, pay special attention to line connections and actuator seals - these are common failure points.';
-    }
-    
-    if (content.toLowerCase().includes('avionics') || content.toLowerCase().includes('electrical')) {
-      return 'For avionics issues, we should follow a systematic troubleshooting approach:\n\n1. Check for any error codes in the maintenance computer\n2. Verify power supply to the affected components\n3. Inspect wiring connectors for corrosion or damage\n4. Test continuity of suspect circuits\n\nThe fault you\'re describing is commonly associated with a ground connection issue or intermittent connector problem. The Aircraft Maintenance Manual section 24-00-00 has the detailed troubleshooting flowchart for this system.';
-    }
-    
-    return 'I understand your maintenance issue. To provide more specific guidance, I\'ll need some additional information:\n\n1. Have you seen any warning lights or system messages?\n2. When did you first notice this issue?\n3. Is the problem intermittent or constant?\n4. Have any recent maintenance actions been performed on related systems?\n\nWith more details, I can provide targeted troubleshooting steps from the maintenance manual.';
   };
   
   return (

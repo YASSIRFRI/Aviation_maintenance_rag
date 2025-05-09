@@ -21,7 +21,7 @@ embedder = SentenceTransformer(EMBED_MODEL)
 
 # --- SAMPLE TECHNICIAN QUERY ---
 query = (
-    "During a high-altitude cruise at FL350, the #2 engine’s N1 spool dropped by 8% "
+    "During a high-altitude cruie at FL350, the #2 engine’s N1 spool dropped by 8% "
     "within 30 seconds, accompanied by a low-oil-pressure EICAS advisory and faint "
     "metallic vibration—what step-by-step troubleshooting should be applied?"
 )

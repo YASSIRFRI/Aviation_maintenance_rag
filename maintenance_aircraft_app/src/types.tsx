@@ -50,3 +50,42 @@ export interface User {
       count: number;
     }>;
   }
+
+  // Aircraft model types
+export type AircraftModel = 
+| 'Boeing 737'
+| 'Airbus A320'
+| 'Boeing 787'
+| 'Airbus A350'
+| 'Embraer E190';
+
+// Issue category types
+export type IssueCategory = 
+| 'Mechanical'
+| 'Electrical'
+| 'Hydraulics'
+| 'Avionics'
+| 'Environmental'
+| 'Structural';
+
+// Message type for chat
+export interface Message {
+id: string;
+role: 'user' | 'assistant';
+content: string;
+timestamp: Date;
+tags?: {
+  aircraftModel?: AircraftModel;
+  issueCategory?: IssueCategory;
+};
+processingTime?: number;
+isError?: boolean;
+}
+
+// Chat session type
+export interface ChatSession {
+id: string;
+title: string;
+lastUpdated: Date;
+messages: ChatMessage[];
+}

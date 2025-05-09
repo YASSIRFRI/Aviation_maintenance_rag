@@ -17,18 +17,14 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (message.trim()) {
       const tags: { aircraftModel?: AircraftModel; issueCategory?: IssueCategory } = {};
-      
       if (selectedAircraftModel) {
         tags.aircraftModel = selectedAircraftModel;
       }
-      
       if (selectedIssueCategory) {
         tags.issueCategory = selectedIssueCategory;
       }
-      
       onSendMessage(message, tags);
       setMessage('');
       // Keep tags selected for next message
@@ -37,17 +33,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
 
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-      {showTagSelector && (
-        <div className="mb-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
-          <TagSelector
-            selectedAircraftModel={selectedAircraftModel}
-            selectedIssueCategory={selectedIssueCategory}
-            onSelectAircraftModel={setSelectedAircraftModel}
-            onSelectIssueCategory={setSelectedIssueCategory}
-          />
-        </div>
-      )}
-      
       <form onSubmit={handleSubmit}>
         <div className="flex items-center mb-2">
           <button
@@ -57,7 +42,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
           >
             {showTagSelector ? 'Hide tags' : 'Add tags'}
           </button>
-          
           <div className="flex flex-wrap gap-1 flex-1">
             {selectedAircraftModel && (
               <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -71,7 +55,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
                 </button>
               </span>
             )}
-            
             {selectedIssueCategory && (
               <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
                 {selectedIssueCategory}
@@ -87,6 +70,18 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
           </div>
         </div>
         
+        {/* Tag selector is now shown ABOVE the text input, not replacing it */}
+        {showTagSelector && (
+          <div className="mb-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg max-h-96 overflow-y-auto">
+            <TagSelector
+              selectedAircraftModel={selectedAircraftModel}
+              selectedIssueCategory={selectedIssueCategory}
+              onSelectAircraftModel={setSelectedAircraftModel}
+              onSelectIssueCategory={setSelectedIssueCategory}
+            />
+          </div>
+        )}
+        
         <div className="flex">
           <Textarea
             value={message}
@@ -95,9 +90,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
             className="flex-1 resize-none"
             rows={3}
           />
-          <Button 
-            type="submit" 
-            className="ml-2 self-end" 
+          <Button
+            type="submit"
+            className="ml-2 self-end"
             disabled={!message.trim()}
             rightIcon={<Send size={16} />}
           >
