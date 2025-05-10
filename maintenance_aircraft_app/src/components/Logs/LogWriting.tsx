@@ -166,7 +166,7 @@ const LogWriting = () => {
         
         <div>
           <LogWritingAssistant
-            draftLog={draftLog as MaintenanceLog}
+            draftLog={draftLog}
             onSuggestionSelect={(suggestion) => {
               setDraftLog(prev => ({ ...prev, action: suggestion }));
             }}
