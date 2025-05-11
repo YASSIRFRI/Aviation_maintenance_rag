@@ -306,7 +306,7 @@ def generate_search_query(user_q):
 def web_search(keywords, num_results=5):
     """
     Enhanced DuckDuckGo search that ensures results are properly formatted
-    and adds debug information.
+    with clear source information for citation.
     """
     try:
         # Initialize the DuckDuckGo search engine
@@ -329,65 +329,121 @@ def web_search(keywords, num_results=5):
         
         print(f"Found {len(results)} search results")
         
-        # Format the results with more structure
+        # Format the results with clear source formatting
         formatted_results = []
         for i, res in enumerate(results, 1):
-            title = res.get("title", "")
-            body = res.get("body", "")
-            href = res.get("href", "")
+            title = res.get("title", "").strip()
+            body = res.get("body", "").strip()
+            href = res.get("href", "").strip()
             
             # Print the first result for debugging
             if i == 1:
                 print(f"First result: {title[:50]}... - {body[:100]}...")
             
-            formatted_results.append(f"Source {i}: {title}\nContent: {body}\nURL: {href}")
+            # Format with clear source identification for better citation
+            source_entry = f"Source {i}: {title}"
+            content_entry = f"Content: {body}"
+            url_entry = f"URL: {href}"
+            
+            formatted_results.append(f"{source_entry}\n{content_entry}\n{url_entry}")
         
         return "\n\n".join(formatted_results)
     except Exception as e:
         print(f"Error in web search: {e}")
         return f"Error performing web search: {str(e)}"
-
 def generate_answer(user_q, vector_results, web_snippets=None):
     """
     Build a RAG prompt combining user question, retrieved contexts, and optional web snippets.
-    This improved version ensures web results are properly incorporated.
+    This improved version ensures web results are properly incorporated and sources are tracked.
     """
     # Format vector search results into a string
     vector_contexts = []
-    for c in vector_results:
+    sources = []
+    
+    # Track sources from vector DB
+    for i, c in enumerate(vector_results):
         # Only include helpful results when we also have web search
         if web_snippets and not (c.get("is_helpful", False) or c.get("is_relevant", False)):
             continue
             
-        ctx = f"[{c['collection']} | score={c['score']:.3f}]\n{c['text']}"
+        source_id = f"DB-{i+1}"
+        source_name = ""
+        
+        # Extract source information from payload if available
+        if c["collection"] == "aircraft_maintenance_logs":
+            source_name = c["payload"].get("source", "Aircraft Maintenance Log")
+        elif c["collection"] == "acn":
+            source_name = c["payload"].get("source", "Aviation Safety Report")
+            if "acn" in c["payload"]:
+                source_name += f" ACN-{c['payload']['acn']}"
+        
+        ctx = f"[{source_id}] {c['text']}"
         vector_contexts.append(ctx)
+        
+        # Add to sources list
+        sources.append(f"{source_id}: {source_name}")
     
-    ctx_text = "\n\n".join(vector_contexts) if vector_contexts else "No relevant information found in the database."
-    
-    # Create a web-focused prompt when web search is used
+    # Track sources from web search
+    web_contexts = []
     if web_snippets:
-        # Override template if no good vector DB results and we have web results
+        # Parse web snippets to extract individual sources
+        web_results = web_snippets.split("\n\n")
+        for i, result in enumerate(web_results):
+            if result.startswith("Source"):
+                source_id = f"WEB-{i+1}"
+                
+                # Try to extract the title and URL
+                title_line = ""
+                url_line = ""
+                for line in result.split("\n"):
+                    if line.startswith("Source"):
+                        continue
+                    elif line.startswith("Content:"):
+                        continue
+                    elif line.startswith("URL:"):
+                        url_line = line.replace("URL:", "").strip()
+                    else:
+                        title_line = line.strip()
+                
+                # Add to web contexts
+                web_contexts.append(f"[{source_id}] {result}")
+                
+                # Add to sources list
+                if title_line and url_line:
+                    sources.append(f"{source_id}: {title_line} ({url_line})")
+                elif url_line:
+                    sources.append(f"{source_id}: {url_line}")
+                else:
+                    sources.append(f"{source_id}: Web Search Result #{i+1}")
+    
+    # Combine contexts
+    ctx_text = "\n\n".join(vector_contexts) if vector_contexts else "No relevant information found in the database."
+    web_text = "\n\n".join(web_contexts) if web_contexts else "No relevant web search results found."
+    
+    # Create prompt with explicit instruction to cite sources
+    if web_snippets:
         if not any(c.get("is_helpful", False) for c in vector_results):
             prompt = f"""
 You are an aircraft maintenance assistant. Answer the question using PRIMARILY the web search results below.
 
 Web search results:
-{web_snippets}
+{web_text}
 
 Database information (less relevant):
 {ctx_text}
 
 Question: {user_q}
 
-Provide a clear, factual answer based on the web search results. Focus specifically on answering the question directly without including generic troubleshooting steps unless they're directly relevant to the question.
+Provide a clear, factual answer based on the web search results. Focus specifically on answering the question directly.
+IMPORTANT: At the end of your response, include a "Sources:" section that lists ALL sources you referenced in your answer.
+Use the source IDs (like [WEB-1] or [DB-1]) in your answer when citing specific information, and then provide the full reference at the end.
             """
         else:
-            # For hybrid mode with some good vector results
             prompt = f"""
 You are an aircraft maintenance assistant. Answer the question using BOTH the web search results and database information below.
 
 Web search results:
-{web_snippets}
+{web_text}
 
 Database information:
 {ctx_text}
@@ -395,9 +451,10 @@ Database information:
 Question: {user_q}
 
 Provide a clear, factual answer that combines information from both sources, prioritizing the most relevant information.
+IMPORTANT: At the end of your response, include a "Sources:" section that lists ALL sources you referenced in your answer.
+Use the source IDs (like [WEB-1] or [DB-1]) in your answer when citing specific information, and then provide the full reference at the end.
             """
     else:
-        # Use only vector DB results if no web search was performed
         prompt = f"""
 You are an aircraft maintenance assistant. Answer the question using the following context:
 
@@ -406,16 +463,28 @@ You are an aircraft maintenance assistant. Answer the question using the followi
 Question: {user_q}
 
 Provide a clear, factual answer based on the available information.
+IMPORTANT: At the end of your response, include a "Sources:" section that lists ALL sources you referenced in your answer.
+Use the source IDs (like [DB-1]) in your answer when citing specific information, and then provide the full reference at the end.
         """
+    
+    # Add the sources list to use in the prompt
+    sources_text = "\n".join(sources)
+    prompt += f"\n\nAvailable sources:\n{sources_text}"
     
     # Print the actual prompt we're using for debugging
     print("Prompt length:", len(prompt))
     print("Prompt preview (first 200 chars):", prompt[:200])
-    # Print the beginning of the prompt for debugging
-    print("\nPrompt preview:")
-    print(prompt[:200] + "...")
+    
     # Call Groq API to generate the answer
-    return call_groq_api(prompt, max_tokens=1024, temperature=0.1)
+    response = call_groq_api(prompt, max_tokens=1024, temperature=0.1)
+    
+    # Ensure the sources section is included in the response if it's not already there
+    if "Sources:" not in response and sources:
+        response += "\n\nSources:\n" + "\n".join(sources)
+    
+    return response
+
+
 def rag_pipeline(user_q):
     """
     Main RAG pipeline that balances vector DB and web search:
